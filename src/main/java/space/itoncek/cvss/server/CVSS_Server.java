@@ -8,27 +8,27 @@ import org.hibernate.service.spi.Stoppable;
 import org.hibernate.tool.schema.Action;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import space.itoncek.cvss.server.db.Match;
-import space.itoncek.cvss.server.db.Team;
-import space.itoncek.cvss.server.db.UserAccount;
-import space.itoncek.cvss.server.managers.LoginManager;
+import space.itoncek.cvss.server.db.*;
 import space.itoncek.cvss.server.managers.Roothandler;
+import space.itoncek.cvss.server.managers.ScoreManager;
 import space.itoncek.cvss.server.managers.TeamManager;
 
 public class CVSS_Server implements Stoppable {
 	private static final Logger log = LoggerFactory.getLogger(CVSS_Server.class);
 	public final EntityManagerFactory f;
 	public final Javalin server;
-	private final LoginManager login;
 	private final TeamManager teammgr;
+	private final ScoreManager scoremgr;
 	public boolean dev = true;
-	//public final WebsocketHandler wsh;
+	public final WebsocketHandler wsh;
 
 	public CVSS_Server() {
 		HibernatePersistenceConfiguration builder = new HibernatePersistenceConfiguration("CVSS")
 				.managedClass(Team.class)
 				.managedClass(Match.class)
 				.managedClass(UserAccount.class)
+				.managedClass(ScoringEvent.class)
+				.managedClass(ScoreLogEntry.class)
 				// PostgreSQL
 				.jdbcUrl(System.getenv("PG_URL") == null ? "jdbc:postgresql://postgres:5432/cvss" : System.getenv("PG_URL"))
 				// Credentials
@@ -37,25 +37,36 @@ public class CVSS_Server implements Stoppable {
 				// Automatic schema export
 				.schemaToolingAction(Action.UPDATE)
 				// SQL statement logging
-				.showSql(true, true, true);
+				.showSql(true, false, true);
 
 		f = builder.createEntityManagerFactory();
-		login = new LoginManager(this);
 		teammgr = new TeamManager(this);
+		wsh = new WebsocketHandler(this);
+		scoremgr = new ScoreManager(this);
 
 		server = Javalin.create(cfg -> {
 			cfg.router.apiBuilder(() -> {
-				before(login::checkTokenValidity);
 				get("/", Roothandler::root);
-				path("uac", () -> {
-					post("login", login::login);
-				});
-				path("config", ()-> {
+				get("/time", Roothandler::time);
+				path("teams", ()-> {
 					get("teams", teammgr::listTeams);
 					get("matches", teammgr::listMatches);
-					post("updateTeam", teammgr::updateTeam);
-					post("updateMatch", teammgr::updateMatch);
+					patch("team", teammgr::updateTeam);
+					patch("match", teammgr::updateMatch);
+					post("team", teammgr::createTeam);
+					post("match", teammgr::createMatch);
+					delete("team", teammgr::deleteTeam);
+					delete("match", teammgr::deleteMatch);
 				});
+				path("score", ()->{
+					get("events", scoremgr::getScoringEvents);
+					post("event", scoremgr::createNewScoringEvent);
+					patch("event", scoremgr::updateScoringEvent);
+					get("matchScoreLog", scoremgr::getMatchScoreLog);
+					get("matchScore", scoremgr::getMatchScore);
+					post("score", scoremgr::insertNewScoringEvent);
+				});
+				ws("socket", wsh::handle);
 			});
 		}).start(4444);
 	}
