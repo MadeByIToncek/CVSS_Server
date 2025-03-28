@@ -11,6 +11,7 @@ import org.json.JSONObject;
 import space.itoncek.cvss.server.CVSS_Server;
 import space.itoncek.cvss.server.db.Match;
 import space.itoncek.cvss.server.db.Team;
+import space.itoncek.cvss.server.types.Event;
 
 import java.util.List;
 
@@ -67,6 +68,7 @@ public class TeamManager {
 		server.f.runInTransaction(em -> {
 			Team team = em.find(Team.class, target);
 			team.setName(body.getString("name"));
+			server.wsh.broadcastEvent(Event.TEAM_UPDATE_EVENT);
 			ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result("ok");
 		});
 	}
@@ -78,6 +80,7 @@ public class TeamManager {
 			Match match = em.find(Match.class, target);
 			match.setMatchState(body.getEnum(Match.MatchState.class, "matchState"));
 			match.setResult(body.getEnum(Match.Result.class, "result"));
+			server.wsh.broadcastEvent(Event.MATCH_UPDATE_EVENT);
 			ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result("ok");
 		});
 	}
@@ -89,6 +92,7 @@ public class TeamManager {
 			Team left = em.find(Team.class, body.getInt("left"));
 			Team right = em.find(Team.class, body.getInt("right"));
 			em.persist(Match.newMatch(left,right));
+			server.wsh.broadcastEvent(Event.MATCH_UPDATE_EVENT);
 			ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result("ok");
 		});
 	}
@@ -98,6 +102,7 @@ public class TeamManager {
 
 		server.f.runInTransaction(em -> {
 			em.persist(Team.newTeam(body.getString("name")));
+			server.wsh.broadcastEvent(Event.TEAM_UPDATE_EVENT);
 			ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result("ok");
 		});
 	}
@@ -107,6 +112,7 @@ public class TeamManager {
 
 		server.f.runInTransaction(em -> {
 			em.remove(em.find(Team.class, body.getInt("id")));
+			server.wsh.broadcastEvent(Event.TEAM_UPDATE_EVENT);
 			ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result("ok");
 		});
 	}
@@ -116,6 +122,7 @@ public class TeamManager {
 
 		server.f.runInTransaction(em -> {
 			em.remove(em.find(Match.class, body.getInt("id")));
+			server.wsh.broadcastEvent(Event.MATCH_UPDATE_EVENT);
 			ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result("ok");
 		});
 	}

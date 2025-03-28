@@ -12,6 +12,7 @@ import space.itoncek.cvss.server.db.*;
 import space.itoncek.cvss.server.managers.Roothandler;
 import space.itoncek.cvss.server.managers.ScoreManager;
 import space.itoncek.cvss.server.managers.TeamManager;
+import space.itoncek.cvss.server.managers.WebsocketManager;
 
 public class CVSS_Server implements Stoppable {
 	private static final Logger log = LoggerFactory.getLogger(CVSS_Server.class);
@@ -20,7 +21,7 @@ public class CVSS_Server implements Stoppable {
 	private final TeamManager teammgr;
 	private final ScoreManager scoremgr;
 	public boolean dev = true;
-	public final WebsocketHandler wsh;
+	public final WebsocketManager wsh;
 
 	public CVSS_Server() {
 		HibernatePersistenceConfiguration builder = new HibernatePersistenceConfiguration("CVSS")
@@ -41,7 +42,7 @@ public class CVSS_Server implements Stoppable {
 
 		f = builder.createEntityManagerFactory();
 		teammgr = new TeamManager(this);
-		wsh = new WebsocketHandler(this);
+		wsh = new WebsocketManager(this);
 		scoremgr = new ScoreManager(this);
 
 		server = Javalin.create(cfg -> {
@@ -66,7 +67,10 @@ public class CVSS_Server implements Stoppable {
 					get("matchScore", scoremgr::getMatchScore);
 					post("score", scoremgr::insertNewScoringEvent);
 				});
-				ws("socket", wsh::handle);
+				path("ws", ()-> {
+					ws("event", wsh::handleEventStream);
+					ws("time", wsh::handleTimeStream);
+				});
 			});
 		}).start(4444);
 	}

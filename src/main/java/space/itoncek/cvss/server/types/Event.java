@@ -1,7 +1,6 @@
 package space.itoncek.cvss.server.types;
 
-import org.json.JSONObject;
-
-public interface Event {
-	JSONObject toJson();
+public enum Event {
+	TEAM_UPDATE_EVENT,
+	MATCH_UPDATE_EVENT
 }
