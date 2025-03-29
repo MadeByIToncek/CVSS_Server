@@ -51,7 +51,9 @@ public class CVSS_Server implements Stoppable {
 				get("/time", Roothandler::time);
 				path("teams", ()-> {
 					get("teams", teammgr::listTeams);
+					put("team", teammgr::getTeam);
 					get("matches", teammgr::listMatches);
+					put("match", teammgr::getMatch);
 					patch("team", teammgr::updateTeam);
 					patch("match", teammgr::updateMatch);
 					post("team", teammgr::createTeam);
@@ -67,7 +69,7 @@ public class CVSS_Server implements Stoppable {
 					get("matchScore", scoremgr::getMatchScore);
 					post("score", scoremgr::insertNewScoringEvent);
 				});
-				path("ws", ()-> {
+				path("stream", ()-> {
 					ws("event", wsh::handleEventStream);
 					ws("time", wsh::handleTimeStream);
 				});

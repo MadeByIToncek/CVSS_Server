@@ -5,6 +5,7 @@ import io.javalin.websocket.WsContext;
 import space.itoncek.cvss.server.CVSS_Server;
 import space.itoncek.cvss.server.types.Event;
 
+import java.time.Duration;
 import java.util.ArrayList;
 
 public class WebsocketManager {
@@ -17,7 +18,10 @@ public class WebsocketManager {
 	}
 
 	public void handleEventStream(WsConfig cfg) {
-		cfg.onConnect(wsEventClients::add);
+		cfg.onConnect(e -> {
+			e.session.setIdleTimeout(Duration.ofDays(365));
+			wsEventClients.add(e);
+		});
 
 		cfg.onMessage(h -> {
 			System.out.println("[WS Event] -> " + h.message());
@@ -31,7 +35,10 @@ public class WebsocketManager {
 	}
 
 	public void handleTimeStream(WsConfig cfg) {
-		cfg.onConnect(wsTimeClients::add);
+		cfg.onConnect(e -> {
+			e.session.setIdleTimeout(Duration.ofDays(365));
+			wsTimeClients.add(e);
+		});
 
 		cfg.onMessage(h -> {
 			System.out.println("[WS Time] -> " + h.message());

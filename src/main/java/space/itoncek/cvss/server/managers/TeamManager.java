@@ -5,6 +5,7 @@ import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -15,6 +16,7 @@ import space.itoncek.cvss.server.types.Event;
 
 import java.util.List;
 
+@Slf4j
 public class TeamManager {
 	private final CVSS_Server server;
 
@@ -53,7 +55,7 @@ public class TeamManager {
 						.put("id", m.getId())
 						.put("leftTeamId", m.getLeft().getId())
 						.put("rightTeamId", m.getRight().getId())
-						.put("state",m.getMatchState().toString())
+						.put("state", m.getMatchState().toString())
 						.put("result", m.getResult().toString())
 				);
 			}
@@ -78,8 +80,15 @@ public class TeamManager {
 		int target = body.getInt("id");
 		server.f.runInTransaction(em -> {
 			Match match = em.find(Match.class, target);
+			log.info("{}",body.getInt("leftTeamId"));
+			Team left = em.find(Team.class, body.getInt("leftTeamId"));
+			Team right = em.find(Team.class, body.getInt("rightTeamId"));
+
 			match.setMatchState(body.getEnum(Match.MatchState.class, "matchState"));
 			match.setResult(body.getEnum(Match.Result.class, "result"));
+			match.setLeft(left);
+			match.setRight(right);
+
 			server.wsh.broadcastEvent(Event.MATCH_UPDATE_EVENT);
 			ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result("ok");
 		});
@@ -91,7 +100,7 @@ public class TeamManager {
 		server.f.runInTransaction(em -> {
 			Team left = em.find(Team.class, body.getInt("left"));
 			Team right = em.find(Team.class, body.getInt("right"));
-			em.persist(Match.newMatch(left,right));
+			em.persist(Match.newMatch(left, right));
 			server.wsh.broadcastEvent(Event.MATCH_UPDATE_EVENT);
 			ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result("ok");
 		});
@@ -124,6 +133,30 @@ public class TeamManager {
 			em.remove(em.find(Match.class, body.getInt("id")));
 			server.wsh.broadcastEvent(Event.MATCH_UPDATE_EVENT);
 			ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result("ok");
+		});
+	}
+
+	public void getTeam(@NotNull Context ctx) {
+		JSONObject body = new JSONObject(ctx.body());
+
+		server.f.runInTransaction(em -> {
+			Team team = em.find(Team.class, body.getInt("id"));
+			ctx.contentType(ContentType.APPLICATION_JSON).status(HttpStatus.OK).result(new JSONObject().put("id", team.getId()).put("name", team.getName()).toString(4));
+		});
+	}
+
+	public void getMatch(@NotNull Context ctx) {
+		JSONObject body = new JSONObject(ctx.body());
+
+		server.f.runInTransaction(em -> {
+			Match m = em.find(Match.class, body.getInt("id"));
+			ctx.contentType(ContentType.APPLICATION_JSON).status(HttpStatus.OK).result(new JSONObject()
+					.put("id", m.getId())
+					.put("leftTeamId", m.getLeft().getId())
+					.put("rightTeamId", m.getRight().getId())
+					.put("state", m.getMatchState().toString())
+					.put("result", m.getResult().toString())
+					.toString(4));
 		});
 	}
 }
