@@ -6,8 +6,6 @@ import jakarta.persistence.EntityManagerFactory;
 import org.hibernate.jpa.HibernatePersistenceConfiguration;
 import org.hibernate.service.spi.Stoppable;
 import org.hibernate.tool.schema.Action;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import space.itoncek.cvss.server.db.*;
 import space.itoncek.cvss.server.managers.Roothandler;
 import space.itoncek.cvss.server.managers.ScoreManager;
@@ -15,7 +13,6 @@ import space.itoncek.cvss.server.managers.TeamManager;
 import space.itoncek.cvss.server.managers.WebsocketManager;
 
 public class CVSS_Server implements Stoppable {
-	private static final Logger log = LoggerFactory.getLogger(CVSS_Server.class);
 	public final EntityManagerFactory f;
 	public final Javalin server;
 	private final TeamManager teammgr;

@@ -80,7 +80,6 @@ public class TeamManager {
 		int target = body.getInt("id");
 		server.f.runInTransaction(em -> {
 			Match match = em.find(Match.class, target);
-			log.info("{}",body.getInt("leftTeamId"));
 			Team left = em.find(Team.class, body.getInt("leftTeamId"));
 			Team right = em.find(Team.class, body.getInt("rightTeamId"));
 
@@ -98,8 +97,8 @@ public class TeamManager {
 		JSONObject body = new JSONObject(ctx.body());
 
 		server.f.runInTransaction(em -> {
-			Team left = em.find(Team.class, body.getInt("left"));
-			Team right = em.find(Team.class, body.getInt("right"));
+			Team left = em.find(Team.class, body.getInt("leftTeamId"));
+			Team right = em.find(Team.class, body.getInt("rightTeamId"));
 			em.persist(Match.newMatch(left, right));
 			server.wsh.broadcastEvent(Event.MATCH_UPDATE_EVENT);
 			ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result("ok");
