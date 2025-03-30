@@ -16,7 +16,7 @@ ENV APP_HOME=/usr/app
 ENV PORT=4444
 
 WORKDIR $APP_HOME
-COPY --from=build $APP_HOME/server/build/libs/server-*.jar $APP_HOME/server.jar
+COPY --from=build $APP_HOME/build/libs/server-*.jar $APP_HOME/server.jar
 
 EXPOSE $PORT
 ENTRYPOINT ["java", "-jar", "server.jar"]

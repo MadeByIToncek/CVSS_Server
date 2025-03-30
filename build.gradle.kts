@@ -16,6 +16,7 @@ application {
 
 tasks.jar {
     manifest.attributes["Main-Class"] = "space.itoncek.cvss.server.CVSS_Server"
+    manifest.attributes["Implementation-Version"] = version
     val dependencies = configurations
         .runtimeClasspath
         .get()

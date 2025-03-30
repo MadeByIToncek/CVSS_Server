@@ -7,18 +7,17 @@ import org.hibernate.jpa.HibernatePersistenceConfiguration;
 import org.hibernate.service.spi.Stoppable;
 import org.hibernate.tool.schema.Action;
 import space.itoncek.cvss.server.db.*;
-import space.itoncek.cvss.server.managers.Roothandler;
-import space.itoncek.cvss.server.managers.ScoreManager;
-import space.itoncek.cvss.server.managers.TeamManager;
-import space.itoncek.cvss.server.managers.WebsocketManager;
+import space.itoncek.cvss.server.managers.*;
 
 public class CVSS_Server implements Stoppable {
 	public final EntityManagerFactory f;
 	public final Javalin server;
-	private final TeamManager teammgr;
-	private final ScoreManager scoremgr;
+	public final TeamManager teammgr;
+	public final MatchManager matchMgr;
+	public final ScoreManager scoreMgr;
 	public boolean dev = true;
 	public final WebsocketManager wsh;
+	public TimingManager timingManager;
 
 	public CVSS_Server() {
 		HibernatePersistenceConfiguration builder = new HibernatePersistenceConfiguration("CVSS")
@@ -27,6 +26,7 @@ public class CVSS_Server implements Stoppable {
 				.managedClass(UserAccount.class)
 				.managedClass(ScoringEvent.class)
 				.managedClass(ScoreLogEntry.class)
+				.managedClass(Keystore.class)
 				// PostgreSQL
 				.jdbcUrl(System.getenv("PG_URL") == null ? "jdbc:postgresql://postgres:5432/cvss" : System.getenv("PG_URL"))
 				// Credentials
@@ -40,7 +40,9 @@ public class CVSS_Server implements Stoppable {
 		f = builder.createEntityManagerFactory();
 		teammgr = new TeamManager(this);
 		wsh = new WebsocketManager(this);
-		scoremgr = new ScoreManager(this);
+		matchMgr = new MatchManager(this);
+		scoreMgr = new ScoreManager(this);
+		timingManager = new TimingManager(this);
 
 		server = Javalin.create(cfg -> {
 			cfg.router.apiBuilder(() -> {
@@ -58,13 +60,21 @@ public class CVSS_Server implements Stoppable {
 					delete("team", teammgr::deleteTeam);
 					delete("match", teammgr::deleteMatch);
 				});
+				path("match", ()-> {
+					post("arm", matchMgr::arm);
+					post("start", matchMgr::start);
+					post("force-end", matchMgr::forceEnd);
+					get("leftTeamId", matchMgr::getLeftTeamId);
+					get("rightTeamId", matchMgr::getRightTeamId);
+					get("matchInProgress", matchMgr::isMatchInProgress);
+				});
 				path("score", ()->{
-					get("events", scoremgr::getScoringEvents);
-					post("event", scoremgr::createNewScoringEvent);
-					patch("event", scoremgr::updateScoringEvent);
-					get("matchScoreLog", scoremgr::getMatchScoreLog);
-					get("matchScore", scoremgr::getMatchScore);
-					post("score", scoremgr::insertNewScoringEvent);
+					get("events", scoreMgr::getScoringEvents);
+					post("event", scoreMgr::createNewScoringEvent);
+					patch("event", scoreMgr::updateScoringEvent);
+					get("matchScoreLog", scoreMgr::getMatchScoreLog);
+					get("matchScore", scoreMgr::getMatchScore);
+					post("score", scoreMgr::insertNewScoringEvent);
 				});
 				path("stream", ()-> {
 					ws("event", wsh::handleEventStream);
@@ -83,6 +93,7 @@ public class CVSS_Server implements Stoppable {
 	@Override
 	public void stop() {
 		server.stop();
+		timingManager.stop();
 		f.close();
 	}
 }
