@@ -21,32 +21,30 @@ public class WebsocketManager {
 
 	public void handleEventStream(WsConfig cfg) {
 		cfg.onConnect(e -> {
-			log.info("Event stream has been connected!");
 			e.session.setIdleTimeout(Duration.ofDays(365));
 			wsEventClients.add(e);
 		});
 
 		cfg.onMessage(h -> {
-			System.out.println("[WS Event] -> " + h.message());
+			log.info("[WS Event] -> {}", h.message());
 		});
 	}
 
 	public void broadcastEvent(Event e) {
 		log.info("Broadcasting event {}",e.name());
 		wsEventClients.stream().filter(x -> x.session.isOpen()).forEach(x -> {
-			x.send(e.toString());
+			x.send(e.name());
 		});
 	}
 
 	public void handleTimeStream(WsConfig cfg) {
 		cfg.onConnect(e -> {
-			log.info("Time stream has been connected!");
 			e.session.setIdleTimeout(Duration.ofDays(365));
 			wsTimeClients.add(e);
 		});
 
 		cfg.onMessage(h -> {
-			System.out.println("[WS Time] -> " + h.message());
+			log.info("[WS Time] -> {}", h.message());
 		});
 	}
 

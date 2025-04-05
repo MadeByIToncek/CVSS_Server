@@ -36,7 +36,7 @@ public class MatchManager {
 			}
 			em.persist(Keystore.generateKeystore("match_state", "arm"));
 
-			server.wsh.broadcastEvent(Event.MATCH_ARM);
+			server.wsMgr.broadcastEvent(Event.MATCH_ARM);
 
 			ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result("ok");
 		});
@@ -50,16 +50,34 @@ public class MatchManager {
 				return;
 			}
 			matchstate.value = "start";
-			server.wsh.broadcastEvent(Event.MATCH_START);
-			server.timingManager.start();
+			server.wsMgr.broadcastEvent(Event.MATCH_START);
+			server.timingMgr.start();
 
 			ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result("ok");
 		});
 	}
 
+	public void recycle(@NotNull Context ctx) {
+		server.wsMgr.broadcastEvent(Event.MATCH_RECYCLE);
+		server.timingMgr.stopClock();
+		server.f.runInTransaction(em -> {
+			Keystore matchstate = em.find(Keystore.class, "match_state");
+			if (matchstate != null) {
+				em.remove(matchstate);
+			}
+			em.persist(Keystore.generateKeystore("match_state", "arm"));
+
+			Keystore currentMatch = em.find(Keystore.class, "current_match");
+			Match match = em.find(Match.class, Integer.parseInt(currentMatch.value));
+			match.setMatchState(Match.MatchState.UPCOMING);
+		});
+	}
+
 	public void endMatch() {
-		server.wsh.broadcastEvent(Event.MATCH_END);
-		server.wsh.broadcastClockStop();
+		if(server.timingMgr.remainingTime.get() > 0) {
+			server.wsMgr.broadcastEvent(Event.MATCH_END);
+			server.wsMgr.broadcastClockStop();
+		}
 		server.f.runInTransaction(em -> {
 			em.remove(em.find(Keystore.class, "current_match"));
 			em.remove(em.find(Keystore.class, "match_state"));
@@ -77,16 +95,47 @@ public class MatchManager {
 		});
 	}
 
-	public void getLeftTeamId(@NotNull Context ctx) {
+	public void isMatchArmed(@NotNull Context ctx) {
+		server.f.runInTransaction(em -> {
+			Keystore matchstate = em.find(Keystore.class, "match_state");
+			if (matchstate == null) {
+				ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result(Boolean.toString(false));
+				return;
+			}
+			ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result(Boolean.toString(matchstate.value.equals("arm")));
+		});
+	}
 
+	public void getLeftTeamId(@NotNull Context ctx) {
+		server.f.runInTransaction(em -> {
+			Keystore currentMatch = em.find(Keystore.class, "current_match");
+			Match match = em.find(Match.class,Integer.parseInt(currentMatch.value));
+			ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result(match.getLeft().getId().toString());
+		});
 	}
 
 	public void getRightTeamId(@NotNull Context ctx) {
-
+		server.f.runInTransaction(em -> {
+			Keystore currentMatch = em.find(Keystore.class, "current_match");
+			Match match = em.find(Match.class,Integer.parseInt(currentMatch.value));
+			ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result(match.getRight().getId().toString());
+		});
 	}
 
 	public void forceEnd(@NotNull Context ctx) {
-		server.timingManager.stopClock();
+		server.timingMgr.stopClock();
 		endMatch();
+	}
+
+	public void reset(@NotNull Context ctx) {
+		server.wsMgr.broadcastEvent(Event.MATCH_RESET);
+		server.f.runInTransaction(em -> {
+			Keystore currentMatch = em.find(Keystore.class, "current_match");
+			Match match = em.find(Match.class, Integer.parseInt(currentMatch.value));
+			match.setMatchState(Match.MatchState.UPCOMING);
+			em.remove(currentMatch);
+			em.remove(em.find(Keystore.class, "match_state"));
+			ctx.result("ok");
+		});
 	}
 }

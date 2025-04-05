@@ -12,12 +12,13 @@ import space.itoncek.cvss.server.managers.*;
 public class CVSS_Server implements Stoppable {
 	public final EntityManagerFactory f;
 	public final Javalin server;
-	public final TeamManager teammgr;
+	public final TeamManager teamMgr;
 	public final MatchManager matchMgr;
 	public final ScoreManager scoreMgr;
+	private final OverlayManager overlayMgr;
 	public boolean dev = true;
-	public final WebsocketManager wsh;
-	public TimingManager timingManager;
+	public final WebsocketManager wsMgr;
+	public TimingManager timingMgr;
 
 	public CVSS_Server() {
 		HibernatePersistenceConfiguration builder = new HibernatePersistenceConfiguration("CVSS")
@@ -38,35 +39,39 @@ public class CVSS_Server implements Stoppable {
 				.showSql(true, false, true);
 
 		f = builder.createEntityManagerFactory();
-		teammgr = new TeamManager(this);
-		wsh = new WebsocketManager(this);
+		teamMgr = new TeamManager(this);
+		wsMgr = new WebsocketManager(this);
 		matchMgr = new MatchManager(this);
 		scoreMgr = new ScoreManager(this);
-		timingManager = new TimingManager(this);
+		timingMgr = new TimingManager(this);
+		overlayMgr = new OverlayManager(this);
 
 		server = Javalin.create(cfg -> {
 			cfg.router.apiBuilder(() -> {
 				get("/", Roothandler::root);
 				get("/time", Roothandler::time);
+				get("/defaultMatchLength", timingMgr::getTime);
 				path("teams", ()-> {
-					get("teams", teammgr::listTeams);
-					put("team", teammgr::getTeam);
-					get("matches", teammgr::listMatches);
-					put("match", teammgr::getMatch);
-					patch("team", teammgr::updateTeam);
-					patch("match", teammgr::updateMatch);
-					post("team", teammgr::createTeam);
-					post("match", teammgr::createMatch);
-					delete("team", teammgr::deleteTeam);
-					delete("match", teammgr::deleteMatch);
+					get("teams", teamMgr::listTeams);
+					put("team", teamMgr::getTeam);
+					get("matches", teamMgr::listMatches);
+					put("match", teamMgr::getMatch);
+					patch("team", teamMgr::updateTeam);
+					patch("match", teamMgr::updateMatch);
+					post("team", teamMgr::createTeam);
+					post("match", teamMgr::createMatch);
+					delete("team", teamMgr::deleteTeam);
+					delete("match", teamMgr::deleteMatch);
 				});
 				path("match", ()-> {
 					post("arm", matchMgr::arm);
 					post("start", matchMgr::start);
-					post("force-end", matchMgr::forceEnd);
+					post("recycle", matchMgr::recycle);
+					post("reset", matchMgr::reset);
 					get("leftTeamId", matchMgr::getLeftTeamId);
 					get("rightTeamId", matchMgr::getRightTeamId);
 					get("matchInProgress", matchMgr::isMatchInProgress);
+					get("matchArmed", matchMgr::isMatchArmed);
 				});
 				path("score", ()->{
 					get("events", scoreMgr::getScoringEvents);
@@ -76,9 +81,24 @@ public class CVSS_Server implements Stoppable {
 					get("matchScore", scoreMgr::getMatchScore);
 					post("score", scoreMgr::insertNewScoringEvent);
 				});
+				path("overlay", ()-> {
+					path("left", ()-> {
+						put("show", overlayMgr::showLeftOverlay);
+						put("hide", overlayMgr::hideLeftOverlay);
+					});
+					path("right", ()-> {
+						put("show", overlayMgr::showRightOverlay);
+						put("hide", overlayMgr::hideRightOverlay);
+					});
+					path("timer", ()-> {
+						put("show", overlayMgr::showTimeOverlay);
+						put("hide", overlayMgr::hideTimeOverlay);
+					});
+					ws("stream", overlayMgr::handleOverlayStream);
+				});
 				path("stream", ()-> {
-					ws("event", wsh::handleEventStream);
-					ws("time", wsh::handleTimeStream);
+					ws("event", wsMgr::handleEventStream);
+					ws("time", wsMgr::handleTimeStream);
 				});
 			});
 		}).start(4444);
@@ -93,7 +113,7 @@ public class CVSS_Server implements Stoppable {
 	@Override
 	public void stop() {
 		server.stop();
-		timingManager.stop();
+		timingMgr.stop();
 		f.close();
 	}
 }
