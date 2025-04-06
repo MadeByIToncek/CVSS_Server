@@ -57,6 +57,7 @@ public class CVSS_Server implements Stoppable {
 					get("matches", teamMgr::listMatches);
 					put("match", teamMgr::getMatch);
 					patch("team", teamMgr::updateTeam);
+					patch("teamMembers", teamMgr::updateTeamMembers);
 					patch("match", teamMgr::updateMatch);
 					post("team", teamMgr::createTeam);
 					post("match", teamMgr::createMatch);

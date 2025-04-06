@@ -22,7 +22,6 @@ public class OverlayManager {
 
 	public void showLeftOverlay(@NotNull Context ctx) {
 		broadcastOverlayCommand(OverlayCommand.SHOW_LEFT);
-		log.info("hit!");
 		ctx.result("ok");
 	}
 
@@ -53,7 +52,6 @@ public class OverlayManager {
 
 	public void handleOverlayStream(WsConfig cfg) {
 		cfg.onConnect(e -> {
-			log.info("Overlay stream has been connected!");
 			e.session.setIdleTimeout(Duration.ofDays(365));
 			wsClients.add(e);
 		});
@@ -64,6 +62,8 @@ public class OverlayManager {
 	}
 
 	public void broadcastOverlayCommand(OverlayCommand c) {
+		log.info("{} {}", List.of(OverlayCommand.SHOW_TIME, OverlayCommand.SHOW_LEFT, OverlayCommand.SHOW_RIGHT).contains(c)?"Showing":"Hiding",
+				List.of(OverlayCommand.HIDE_LEFT, OverlayCommand.SHOW_LEFT).contains(c)?"left third":List.of(OverlayCommand.HIDE_RIGHT, OverlayCommand.SHOW_RIGHT).contains(c)?"right third":"timer");
 		wsClients.stream().filter(x -> x.session.isOpen()).forEach(x -> {
 			x.send(c.name());
 		});

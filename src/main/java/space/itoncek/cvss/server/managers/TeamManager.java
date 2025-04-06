@@ -80,6 +80,21 @@ public class TeamManager {
 			ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result("ok");
 		});
 	}
+	public void updateTeamMembers(@NotNull Context ctx) {
+		JSONObject body = new JSONObject(ctx.body());
+		int target = body.getInt("id");
+		server.f.runInTransaction(em -> {
+			Team team = em.find(Team.class, target);
+			JSONArray bodyMembers = body.getJSONArray("members");
+			List<String> dbMembers = team.getMembers();
+			dbMembers.clear();
+			for (int i = 0; i < bodyMembers.length(); i++) {
+				dbMembers.add(bodyMembers.getString(i));
+			}
+			server.wsMgr.broadcastEvent(Event.TEAM_UPDATE_EVENT);
+			ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result("ok");
+		});
+	}
 
 	public void updateMatch(@NotNull Context ctx) {
 		JSONObject body = new JSONObject(ctx.body());

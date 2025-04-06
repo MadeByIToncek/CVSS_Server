@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import space.itoncek.cvss.server.CVSS_Server;
+import space.itoncek.cvss.server.db.Keystore;
 import space.itoncek.cvss.server.db.Match;
 import space.itoncek.cvss.server.db.ScoreLogEntry;
 import space.itoncek.cvss.server.db.ScoringEvent;
@@ -96,26 +97,29 @@ public class ScoreManager {
 	}
 
 	public void getMatchScore(@NotNull Context ctx) {
-		JSONObject body = new JSONObject(ctx.body());
-		int target = body.getInt("id");
 		server.f.runInTransaction(em -> {
-			Match m = em.find(Match.class, target);
+			Keystore currentMatch = em.find(Keystore.class, "current_match");
+			if (currentMatch == null) {
+				ctx.status(HttpStatus.INTERNAL_SERVER_ERROR).result("-1");
+			} else {
+				Match m = em.find(Match.class, Integer.parseInt(currentMatch.value));
 
-			int left = 0;
-			int right = 0;
+				int left = 0;
+				int right = 0;
 
-			for (ScoreLogEntry sle : m.getScoreLog()) {
-				if (sle.isLeftSide()) {
-					left += sle.getEvent().getPointAmount();
-				} else {
-					right += sle.getEvent().getPointAmount();
+				for (ScoreLogEntry sle : m.getScoreLog()) {
+					if (sle.isLeftSide()) {
+						left += sle.getEvent().getPointAmount();
+					} else {
+						right += sle.getEvent().getPointAmount();
+					}
 				}
-			}
 
-			ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result(new JSONObject()
-					.put("left", left)
-					.put("right", right)
-					.toString(4));
+				ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result(new JSONObject()
+						.put("left", left)
+						.put("right", right)
+						.toString(4));
+			}
 		});
 	}
 }
