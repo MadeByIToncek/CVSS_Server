@@ -11,7 +11,8 @@ import java.util.ArrayList;
 
 @Slf4j
 public class WebsocketManager {
-	private final CVSS_Server server;
+	@SuppressWarnings({"FieldCanBeLocal", "unused"})
+	private final CVSS_Server server;/* We don't hide server! */
 	private final ArrayList<WsContext> wsEventClients = new ArrayList<>();
 	private final ArrayList<WsContext> wsTimeClients = new ArrayList<>();
 
@@ -25,16 +26,12 @@ public class WebsocketManager {
 			wsEventClients.add(e);
 		});
 
-		cfg.onMessage(h -> {
-			log.info("[WS Event] -> {}", h.message());
-		});
+		cfg.onMessage(h -> log.info("[WS Event] -> {}", h.message()));
 	}
 
 	public void broadcastEvent(Event e) {
 		log.info("Broadcasting event {}",e.name());
-		wsEventClients.stream().filter(x -> x.session.isOpen()).forEach(x -> {
-			x.send(e.name());
-		});
+		wsEventClients.stream().filter(x -> x.session.isOpen()).forEach(x -> x.send(e.name()));
 	}
 
 	public void handleTimeStream(WsConfig cfg) {
@@ -43,25 +40,17 @@ public class WebsocketManager {
 			wsTimeClients.add(e);
 		});
 
-		cfg.onMessage(h -> {
-			log.info("[WS Time] -> {}", h.message());
-		});
+		cfg.onMessage(h -> log.info("[WS Time] -> {}", h.message()));
 	}
 
 	public void broadcastClockStart() {
-		wsTimeClients.stream().filter(x -> x.session.isOpen()).forEach(x -> {
-			x.send(-1);
-		});
+		wsTimeClients.stream().filter(x -> x.session.isOpen()).forEach(x -> x.send(-1));
 	}
 	public void broadcastClockStop() {
-		wsTimeClients.stream().filter(x -> x.session.isOpen()).forEach(x -> {
-			x.send(-2);
-		});
+		wsTimeClients.stream().filter(x -> x.session.isOpen()).forEach(x -> x.send(-2));
 	}
 
 	public void broadcastRemainingTime(int remainingSeconds) {
-		wsTimeClients.stream().filter(x -> x.session.isOpen()).forEach(x -> {
-			x.send(remainingSeconds);
-		});
+		wsTimeClients.stream().filter(x -> x.session.isOpen()).forEach(x -> x.send(remainingSeconds));
 	}
 }

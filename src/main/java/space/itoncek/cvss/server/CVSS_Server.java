@@ -16,9 +16,9 @@ public class CVSS_Server implements Stoppable {
 	public final MatchManager matchMgr;
 	public final ScoreManager scoreMgr;
 	private final OverlayManager overlayMgr;
-	public boolean dev = true;
+	public final boolean dev = true;
 	public final WebsocketManager wsMgr;
-	public TimingManager timingMgr;
+	public final TimingManager timingMgr;
 
 	public CVSS_Server() {
 		HibernatePersistenceConfiguration builder = new HibernatePersistenceConfiguration("CVSS")
@@ -46,63 +46,62 @@ public class CVSS_Server implements Stoppable {
 		timingMgr = new TimingManager(this);
 		overlayMgr = new OverlayManager(this);
 
-		server = Javalin.create(cfg -> {
-			cfg.router.apiBuilder(() -> {
-				get("/", Roothandler::root);
-				get("/time", Roothandler::time);
-				get("/defaultMatchLength", timingMgr::getTime);
-				path("teams", ()-> {
-					get("teams", teamMgr::listTeams);
-					put("team", teamMgr::getTeam);
-					get("matches", teamMgr::listMatches);
-					put("match", teamMgr::getMatch);
-					patch("team", teamMgr::updateTeam);
-					patch("teamMembers", teamMgr::updateTeamMembers);
-					patch("match", teamMgr::updateMatch);
-					post("team", teamMgr::createTeam);
-					post("match", teamMgr::createMatch);
-					delete("team", teamMgr::deleteTeam);
-					delete("match", teamMgr::deleteMatch);
-				});
-				path("match", ()-> {
-					post("arm", matchMgr::arm);
-					post("start", matchMgr::start);
-					post("recycle", matchMgr::recycle);
-					post("reset", matchMgr::reset);
-					get("leftTeamId", matchMgr::getLeftTeamId);
-					get("rightTeamId", matchMgr::getRightTeamId);
-					get("matchInProgress", matchMgr::isMatchInProgress);
-					get("matchArmed", matchMgr::isMatchArmed);
-				});
-				path("score", ()->{
-					get("events", scoreMgr::getScoringEvents);
-					post("event", scoreMgr::createNewScoringEvent);
-					patch("event", scoreMgr::updateScoringEvent);
-					get("matchScoreLog", scoreMgr::getMatchScoreLog);
-					get("matchScore", scoreMgr::getMatchScore);
-					post("score", scoreMgr::insertNewScoringEvent);
-				});
-				path("overlay", ()-> {
-					path("left", ()-> {
-						put("show", overlayMgr::showLeftOverlay);
-						put("hide", overlayMgr::hideLeftOverlay);
-					});
-					path("right", ()-> {
-						put("show", overlayMgr::showRightOverlay);
-						put("hide", overlayMgr::hideRightOverlay);
-					});
-					path("timer", ()-> {
-						put("show", overlayMgr::showTimeOverlay);
-						put("hide", overlayMgr::hideTimeOverlay);
-					});
-					ws("stream", overlayMgr::handleOverlayStream);
-				});
-				path("stream", ()-> {
-					ws("event", wsMgr::handleEventStream);
-					ws("time", wsMgr::handleTimeStream);
-				});
+		server = Javalin.create(cfg -> cfg.router.apiBuilder(() -> {
+			get("/", Roothandler::root);
+			get("/time", Roothandler::time);
+			get("/defaultMatchLength", timingMgr::getTime);
+			path("teams", ()-> {
+				get("teams", teamMgr::listTeams);
+				put("team", teamMgr::getTeam);
+				get("matches", teamMgr::listMatches);
+				put("match", teamMgr::getMatch);
+				patch("team", teamMgr::updateTeam);
+				patch("teamMembers", teamMgr::updateTeamMembers);
+				patch("match", teamMgr::updateMatch);
+				post("team", teamMgr::createTeam);
+				post("match", teamMgr::createMatch);
+				delete("team", teamMgr::deleteTeam);
+				delete("match", teamMgr::deleteMatch);
 			});
-		}).start(4444);
+			path("match", ()-> {
+				post("arm", matchMgr::arm);
+				post("start", matchMgr::start);
+				post("recycle", matchMgr::recycle);
+				post("reset", matchMgr::reset);
+				get("leftTeamId", matchMgr::getLeftTeamId);
+				get("rightTeamId", matchMgr::getRightTeamId);
+				get("matchInProgress", matchMgr::isMatchInProgress);
+				get("matchArmed", matchMgr::isMatchArmed);
+			});
+			path("score", ()->{
+				get("events", scoreMgr::getScoringEvents);
+				post("event", scoreMgr::createNewScoringEvent);
+				patch("event", scoreMgr::updateScoringEvent);
+				get("matchScoreLog", scoreMgr::getMatchScoreLog);
+				get("matchScore", scoreMgr::getMatchScore);
+				post("score", scoreMgr::insertNewScoringEvent);
+			});
+			path("overlay", ()-> {
+				path("left", ()-> {
+					put("show", overlayMgr::showLeftOverlay);
+					put("hide", overlayMgr::hideLeftOverlay);
+				});
+				path("right", ()-> {
+					put("show", overlayMgr::showRightOverlay);
+					put("hide", overlayMgr::hideRightOverlay);
+				});
+				path("timer", ()-> {
+					put("show", overlayMgr::showTimeOverlay);
+					put("hide", overlayMgr::hideTimeOverlay);
+				});
+				get("switchTVs", overlayMgr::shouldSwitchTVs);
+				ws("stream", overlayMgr::handleOverlayStream);
+			});
+			path("stream", ()-> {
+				ws("event", wsMgr::handleEventStream);
+				ws("time", wsMgr::handleTimeStream);
+			});
+		})).start(4444);
 	}
 
 	public static void main(String[] args) {

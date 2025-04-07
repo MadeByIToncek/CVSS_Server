@@ -29,10 +29,10 @@ public class LoginManager {
 	private static final Logger log = LoggerFactory.getLogger(LoginManager.class);
 	private final long validityTimeout = 1800000; // 30 minutes
 	private final CVSS_Server server;
-	public Algorithm algorithm;
-	public JWTGenerator<UserAccount> generator;
-	public JWTVerifier verifier;
-	public JWTProvider<UserAccount> provider;
+	public final Algorithm algorithm;
+	public final JWTGenerator<UserAccount> generator;
+	public final JWTVerifier verifier;
+	public final JWTProvider<UserAccount> provider;
 
 	public LoginManager(CVSS_Server server) {
 		this.server = server;

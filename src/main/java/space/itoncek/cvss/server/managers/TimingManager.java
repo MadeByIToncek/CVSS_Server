@@ -18,7 +18,7 @@ public class TimingManager implements Stoppable {
 	private final CVSS_Server server;
 	private static final int time = 10;
 	private final ScheduledExecutorService ses = Executors.newScheduledThreadPool(4);
-	AtomicInteger remainingTime = new AtomicInteger(-1);
+	final AtomicInteger remainingTime = new AtomicInteger(-1);
 
 	public TimingManager(CVSS_Server server) {
 		this.server = server;
