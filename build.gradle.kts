@@ -32,7 +32,7 @@ java {
 
 val lombokVersion = "1.18.34"
 val postgresqlVersion = "42.7.3"
-val hibernateVersion = "7.0.0.Beta1"
+val hibernateVersion = "7.0.0.Beta5"
 val junitVersion = "5.10.3"
 
 dependencies {
@@ -45,7 +45,7 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok:$lombokVersion")
     implementation("org.postgresql:postgresql:$postgresqlVersion")
     implementation("org.hibernate.orm:hibernate-core:$hibernateVersion")
-    implementation("org.hibernate.orm:hibernate-processor:7.0.0.Beta4")
+    implementation("org.hibernate.orm:hibernate-processor:$hibernateVersion")
     annotationProcessor("org.hibernate.orm:hibernate-jpamodelgen:$hibernateVersion")
     implementation("org.json:json:20240303")
     implementation("org.apache.commons:commons-lang3:3.14.0")

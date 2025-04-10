@@ -21,6 +21,7 @@ public class CVSS_Server implements Stoppable {
 	public final TimingManager timingMgr;
 
 	public CVSS_Server() {
+
 		HibernatePersistenceConfiguration builder = new HibernatePersistenceConfiguration("CVSS")
 				.managedClass(Team.class)
 				.managedClass(Match.class)
@@ -28,6 +29,7 @@ public class CVSS_Server implements Stoppable {
 				.managedClass(ScoringEvent.class)
 				.managedClass(ScoreLogEntry.class)
 				.managedClass(Keystore.class)
+				.managedClass(GraphicsInstance.class)
 				// PostgreSQL
 				.jdbcUrl(System.getenv("PG_URL") == null ? "jdbc:postgresql://postgres:5432/cvss" : System.getenv("PG_URL"))
 				// Credentials
@@ -94,10 +96,16 @@ public class CVSS_Server implements Stoppable {
 					put("show", overlayMgr::showTimeOverlay);
 					put("hide", overlayMgr::hideTimeOverlay);
 				});
-				get("switchTVs", overlayMgr::shouldSwitchTVs);
-				ws("stream", overlayMgr::handleOverlayStream);
+				post("register", overlayMgr::registerGraphicsClient);
+				post("report", overlayMgr::reportGraphicsReady);
+				get("instances", overlayMgr::listGraphicsInstances);
+				put("instance", overlayMgr::getGraphicsInstance);
+				patch("instance", overlayMgr::updateGraphicsInstance);
+				get("probe", overlayMgr::getProbe);
+				patch("probe", overlayMgr::setProbe);
 			});
 			path("stream", ()-> {
+				ws("overlay", overlayMgr::handleOverlayStream);
 				ws("event", wsMgr::handleEventStream);
 				ws("time", wsMgr::handleTimeStream);
 			});
