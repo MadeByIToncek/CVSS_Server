@@ -25,7 +25,6 @@ public class CVSS_Server implements Stoppable {
 		HibernatePersistenceConfiguration builder = new HibernatePersistenceConfiguration("CVSS")
 				.managedClass(Team.class)
 				.managedClass(Match.class)
-				.managedClass(UserAccount.class)
 				.managedClass(ScoringEvent.class)
 				.managedClass(ScoreLogEntry.class)
 				.managedClass(Keystore.class)
