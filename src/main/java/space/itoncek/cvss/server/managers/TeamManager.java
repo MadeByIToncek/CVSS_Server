@@ -34,12 +34,7 @@ public class TeamManager {
 			JSONArray arr = new JSONArray();
 
 			for (Team t : data) {
-				arr.put(new JSONObject()
-						.put("id", t.getId())
-						.put("name", t.getName())
-						.put("colorBright", t.getColorBright())
-						.put("colorDark", t.getColorDark())
-						.put("members", new JSONArray(t.getMembers())));
+				arr.put(t.serialize());
 			}
 
 			ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result(arr.toString(4));
@@ -56,13 +51,7 @@ public class TeamManager {
 			JSONArray arr = new JSONArray();
 
 			for (Match m : data) {
-				arr.put(new JSONObject()
-						.put("id", m.getId())
-						.put("leftTeamId", m.getLeft().getId())
-						.put("rightTeamId", m.getRight().getId())
-						.put("state", m.getMatchState().toString())
-						.put("result", m.getResult().toString())
-				);
+				arr.put(m.serialize());
 			}
 
 			ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result(arr.toString(4));
@@ -74,23 +63,19 @@ public class TeamManager {
 		int target = body.getInt("id");
 		server.f.runInTransaction(em -> {
 			Team team = em.find(Team.class, target);
-			team.setName(body.getString("name"));
-			team.setColorBright(body.getString("color"));
+			team.update(body);
 			server.wsMgr.broadcastEvent(Event.TEAM_UPDATE_EVENT);
 			ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result("ok");
 		});
 	}
+
 	public void updateTeamMembers(@NotNull Context ctx) {
 		JSONObject body = new JSONObject(ctx.body());
 		int target = body.getInt("id");
 		server.f.runInTransaction(em -> {
 			Team team = em.find(Team.class, target);
 			JSONArray bodyMembers = body.getJSONArray("members");
-			List<String> dbMembers = team.getMembers();
-			dbMembers.clear();
-			for (int i = 0; i < bodyMembers.length(); i++) {
-				dbMembers.add(bodyMembers.getString(i));
-			}
+			team.updateMembers(bodyMembers);
 			server.wsMgr.broadcastEvent(Event.TEAM_UPDATE_EVENT);
 			ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result("ok");
 		});
@@ -104,10 +89,7 @@ public class TeamManager {
 			Team left = em.find(Team.class, body.getInt("leftTeamId"));
 			Team right = em.find(Team.class, body.getInt("rightTeamId"));
 
-			match.setMatchState(body.getEnum(Match.MatchState.class, "matchState"));
-			match.setResult(body.getEnum(Match.Result.class, "result"));
-			match.setLeft(left);
-			match.setRight(right);
+			match.update(body, left, right);
 
 			server.wsMgr.broadcastEvent(Event.MATCH_UPDATE_EVENT);
 			ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result("ok");
@@ -161,28 +143,16 @@ public class TeamManager {
 
 		server.f.runInTransaction(em -> {
 			Team t = em.find(Team.class, body.getInt("id"));
-			ctx.contentType(ContentType.APPLICATION_JSON).status(HttpStatus.OK).result(new JSONObject()
-					.put("id", t.getId())
-					.put("name", t.getName())
-					.put("colorBright", t.getColorBright())
-					.put("colorDark", t.getColorDark())
-					.put("members", new JSONArray(t.getMembers())).toString(4));
+			ctx.contentType(ContentType.APPLICATION_JSON).status(HttpStatus.OK).result(t.serialize().toString(4));
 		});
 	}
 
 	public void getMatch(@NotNull Context ctx) {
-		log.info("{}",ctx.body());
 		JSONObject body = new JSONObject(ctx.body());
 
 		server.f.runInTransaction(em -> {
 			Match m = em.find(Match.class, body.getInt("id"));
-			ctx.contentType(ContentType.APPLICATION_JSON).status(HttpStatus.OK).result(new JSONObject()
-					.put("id", m.getId())
-					.put("leftTeamId", m.getLeft().getId())
-					.put("rightTeamId", m.getRight().getId())
-					.put("state", m.getMatchState().toString())
-					.put("result", m.getResult().toString())
-					.toString(4));
+			ctx.contentType(ContentType.APPLICATION_JSON).status(HttpStatus.OK).result(m.serialize().toString(4));
 		});
 	}
 }

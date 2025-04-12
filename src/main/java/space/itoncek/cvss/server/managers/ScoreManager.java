@@ -9,6 +9,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import space.itoncek.cvss.server.CVSS_Server;
 import space.itoncek.cvss.server.db.Keystore;
+import static space.itoncek.cvss.server.db.Keystore.KeystoreKeys.CURRENT_MATCH;
 import space.itoncek.cvss.server.db.Match;
 import space.itoncek.cvss.server.db.ScoreLogEntry;
 import space.itoncek.cvss.server.db.ScoringEvent;
@@ -31,11 +32,7 @@ public class ScoreManager {
 			JSONArray arr = new JSONArray();
 
 			for (ScoringEvent t : data) {
-				arr.put(new JSONObject()
-						.put("id", t.getId())
-						.put("name", t.getName())
-						.put("points", t.getPointAmount())
-				);
+				arr.put(t.serialize());
 			}
 
 			ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result(arr.toString(4));
@@ -47,8 +44,7 @@ public class ScoreManager {
 		server.f.runInTransaction(em -> {
 			ScoringEvent e = em.find(ScoringEvent.class, body.getInt("id"));
 
-			e.setName(body.getString("name"));
-			e.setPointAmount(body.getInt("points"));
+			e.update(body);
 
 			ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result("ok");
 		});
@@ -69,12 +65,7 @@ public class ScoreManager {
 			Match match = em.find(Match.class, target);
 			JSONArray arr = new JSONArray();
 			for (ScoreLogEntry sle : match.getScoreLog()) {
-				arr.put(new JSONObject()
-						.put("id", sle.getId())
-						.put("match", sle.getMatch().getId())
-						.put("scoreEvent", sle.getEvent().getId())
-						.put("side", sle.isLeftSide())
-				);
+				arr.put(sle.serialize());
 			}
 
 			ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result(arr.toString(4));
@@ -98,7 +89,7 @@ public class ScoreManager {
 
 	public void getMatchScore(@NotNull Context ctx) {
 		server.f.runInTransaction(em -> {
-			Keystore currentMatch = em.find(Keystore.class, "current_match");
+			Keystore currentMatch = em.find(Keystore.class, CURRENT_MATCH.name());
 			if (currentMatch == null) {
 				ctx.status(HttpStatus.INTERNAL_SERVER_ERROR).result("-1");
 			} else {

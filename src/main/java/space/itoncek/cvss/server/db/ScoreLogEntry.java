@@ -3,6 +3,7 @@ package space.itoncek.cvss.server.db;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.json.JSONObject;
 
 @Getter
 @Setter
@@ -26,5 +27,13 @@ public class ScoreLogEntry {
 		sle.leftSide = side;
 		sle.event = event;
 		return sle;
+	}
+
+	public JSONObject serialize() {
+		return new JSONObject()
+				.put("id",getId())
+				.put("matchId", getMatch().getId())
+				.put("leftSide", isLeftSide())
+				.put("event", getEvent().getId());
 	}
 }

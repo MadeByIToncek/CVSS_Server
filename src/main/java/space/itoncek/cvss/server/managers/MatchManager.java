@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
 import space.itoncek.cvss.server.CVSS_Server;
 import space.itoncek.cvss.server.db.Keystore;
+import static space.itoncek.cvss.server.db.Keystore.KeystoreKeys.*;
 import space.itoncek.cvss.server.db.Match;
 import space.itoncek.cvss.server.types.Event;
 
@@ -24,13 +25,13 @@ public class MatchManager {
 			Match m = em.find(Match.class, target);
 			m.setMatchState(Match.MatchState.PLAYING);
 
-			Keystore currentmatch = em.find(Keystore.class, "current_match");
+			Keystore currentmatch = em.find(Keystore.class, CURRENT_MATCH.name());
 			if (currentmatch != null) {
 				em.remove(currentmatch);
 			}
 			em.persist(Keystore.generateKeystore("current_match", m.getId() + ""));
 
-			Keystore matchstate = em.find(Keystore.class, "match_state");
+			Keystore matchstate = em.find(Keystore.class, MATCH_STATE.name());
 			if (matchstate != null) {
 				em.remove(matchstate);
 			}
@@ -44,7 +45,7 @@ public class MatchManager {
 
 	public void start(@NotNull Context ctx) {
 		server.f.runInTransaction(em -> {
-			Keystore matchstate = em.find(Keystore.class, "match_state");
+			Keystore matchstate = em.find(Keystore.class, MATCH_STATE.name());
 			if (matchstate == null) {
 				ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.TEXT_PLAIN).result("No match armed!");
 				return;
@@ -61,15 +62,16 @@ public class MatchManager {
 		server.wsMgr.broadcastEvent(Event.MATCH_RECYCLE);
 		server.timingMgr.stopClock();
 		server.f.runInTransaction(em -> {
-			Keystore matchstate = em.find(Keystore.class, "match_state");
+			Keystore matchstate = em.find(Keystore.class, MATCH_STATE.name());
 			if (matchstate != null) {
 				em.remove(matchstate);
 			}
 			em.persist(Keystore.generateKeystore("match_state", "arm"));
 
-			Keystore currentMatch = em.find(Keystore.class, "current_match");
+			Keystore currentMatch = em.find(Keystore.class, CURRENT_MATCH.name());
 			Match match = em.find(Match.class, Integer.parseInt(currentMatch.value));
 			match.setMatchState(Match.MatchState.UPCOMING);
+			ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result("ok");
 		});
 	}
 
@@ -79,14 +81,14 @@ public class MatchManager {
 			server.wsMgr.broadcastClockStop();
 		}
 		server.f.runInTransaction(em -> {
-			em.remove(em.find(Keystore.class, "current_match"));
-			em.remove(em.find(Keystore.class, "match_state"));
+			em.remove(em.find(Keystore.class, CURRENT_MATCH.name()));
+			em.remove(em.find(Keystore.class, MATCH_STATE.name()));
 		});
 	}
 
 	public void isMatchInProgress(@NotNull Context ctx) {
 		server.f.runInTransaction(em -> {
-			Keystore matchstate = em.find(Keystore.class, "match_state");
+			Keystore matchstate = em.find(Keystore.class, MATCH_STATE.name());
 			if (matchstate == null) {
 				ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result(Boolean.toString(false));
 				return;
@@ -97,7 +99,7 @@ public class MatchManager {
 
 	public void isMatchArmed(@NotNull Context ctx) {
 		server.f.runInTransaction(em -> {
-			Keystore matchstate = em.find(Keystore.class, "match_state");
+			Keystore matchstate = em.find(Keystore.class, MATCH_STATE.name());
 			if (matchstate == null) {
 				ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result(Boolean.toString(false));
 				return;
@@ -108,7 +110,7 @@ public class MatchManager {
 
 	public void getLeftTeamId(@NotNull Context ctx) {
 		server.f.runInTransaction(em -> {
-			Keystore currentMatch = em.find(Keystore.class, "current_match");
+			Keystore currentMatch = em.find(Keystore.class, CURRENT_MATCH.name());
 			Match match = em.find(Match.class,Integer.parseInt(currentMatch.value));
 			ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result(match.getLeft().getId().toString());
 		});
@@ -116,7 +118,7 @@ public class MatchManager {
 
 	public void getRightTeamId(@NotNull Context ctx) {
 		server.f.runInTransaction(em -> {
-			Keystore currentMatch = em.find(Keystore.class, "current_match");
+			Keystore currentMatch = em.find(Keystore.class, CURRENT_MATCH.name());
 			Match match = em.find(Match.class,Integer.parseInt(currentMatch.value));
 			ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result(match.getRight().getId().toString());
 		});
@@ -125,16 +127,17 @@ public class MatchManager {
 	public void forceEnd(@NotNull Context ctx) {
 		server.timingMgr.stopClock();
 		endMatch();
+		ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result("ok");
 	}
 
 	public void reset(@NotNull Context ctx) {
 		server.wsMgr.broadcastEvent(Event.MATCH_RESET);
 		server.f.runInTransaction(em -> {
-			Keystore currentMatch = em.find(Keystore.class, "current_match");
+			Keystore currentMatch = em.find(Keystore.class, CURRENT_MATCH.name());
 			Match match = em.find(Match.class, Integer.parseInt(currentMatch.value));
 			match.setMatchState(Match.MatchState.UPCOMING);
 			em.remove(currentMatch);
-			em.remove(em.find(Keystore.class, "match_state"));
+			em.remove(em.find(Keystore.class, MATCH_STATE.name()));
 			ctx.result("ok");
 		});
 	}

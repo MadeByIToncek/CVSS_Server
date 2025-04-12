@@ -19,4 +19,10 @@ public class Keystore {
 		ks.value = value;
 		return ks;
 	}
+
+	public enum KeystoreKeys {
+		PROBE,
+		CURRENT_MATCH,
+		MATCH_STATE
+	}
 }

@@ -6,6 +6,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.Setter;
+import org.json.JSONObject;
 
 @Getter
 @Setter
@@ -25,6 +26,20 @@ public class GraphicsInstance {
 		i.mode = mode;
 		i.updating = updating;
 		return i;
+	}
+
+	public JSONObject serialize() {
+		return new JSONObject()
+				.put("ident", getIdent())
+				.put("nickname", getNickname())
+				.put("mode", getMode())
+				.put("updating",isUpdating());
+	}
+
+	public void update(JSONObject o) {
+		setNickname(o.getString("nickname"));
+		setMode(o.getEnum(GraphicsInstance.GraphicsMode.class,"mode"));
+		setUpdating(o.getBoolean("updating"));
 	}
 
 	public enum GraphicsMode {

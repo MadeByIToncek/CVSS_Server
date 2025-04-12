@@ -15,6 +15,7 @@ import space.itoncek.cvss.server.CVSS_Server;
 import space.itoncek.cvss.server.db.GraphicsInstance;
 import space.itoncek.cvss.server.db.Keystore;
 import space.itoncek.cvss.server.types.Event;
+import static space.itoncek.cvss.server.db.Keystore.KeystoreKeys.*;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -103,11 +104,7 @@ public class OverlayManager {
 			JSONArray arr = new JSONArray();
 
 			for (GraphicsInstance i : data) {
-				arr.put(new JSONObject()
-						.put("ident", i.getIdent())
-						.put("nickname", i.getNickname())
-						.put("mode", i.getMode())
-						.put("updating",i.isUpdating()));
+				arr.put(i.serialize());
 			}
 			ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result(arr.toString(4));
 		});
@@ -119,11 +116,7 @@ public class OverlayManager {
 			if(i == null) {
 				ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.TEXT_PLAIN).result("Unable to find this graphics instance!");
 			} else {
-				ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result(new JSONObject()
-						.put("ident", i.getIdent())
-						.put("nickname", i.getNickname())
-						.put("mode", i.getMode())
-						.put("updating",i.isUpdating()).toString());
+				ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result(i.serialize().toString(4));
 			}
 		});
 	}
@@ -132,9 +125,7 @@ public class OverlayManager {
 		JSONObject body = new JSONObject(ctx.body());
 		server.f.runInTransaction(em-> {
 			GraphicsInstance gi = em.find(GraphicsInstance.class, body.getString("ident"));
-			gi.setNickname(body.getString("nickname"));
-			gi.setMode(body.getEnum(GraphicsInstance.GraphicsMode.class,"mode"));
-			gi.setUpdating(body.getBoolean("updating"));
+			gi.update(body);
 			ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result("ok");
 		});
 		server.wsMgr.broadcastEvent(Event.GRAPHICS_UPDATE_EVENT);
@@ -142,9 +133,9 @@ public class OverlayManager {
 
 	public void getProbe(@NotNull Context ctx) {
 		server.f.runInTransaction(em -> {
-			Keystore probe = em.find(Keystore.class, "probe");
+			Keystore probe = em.find(Keystore.class, PROBE.name());
 			if(probe == null) {
-				em.persist(Keystore.generateKeystore("probe","true"));
+				em.persist(Keystore.generateKeystore(PROBE.name(),"true"));
 				ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result("true");
 			} else {
 				ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result("%b".formatted(Boolean.parseBoolean(probe.value)));
@@ -153,7 +144,7 @@ public class OverlayManager {
 	}
 	public void setProbe(@NotNull Context ctx) {
 		server.f.runInTransaction(em -> {
-			Keystore probe = em.find(Keystore.class, "probe");
+			Keystore probe = em.find(Keystore.class, PROBE.name());
 			probe.setValue(ctx.body());
 			ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result("ok");
 		});

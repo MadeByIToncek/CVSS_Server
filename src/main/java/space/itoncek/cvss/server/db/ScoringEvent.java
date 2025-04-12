@@ -7,6 +7,7 @@ import jakarta.persistence.Id;
 import jakarta.validation.constraints.Positive;
 import lombok.Getter;
 import lombok.Setter;
+import org.json.JSONObject;
 
 @Getter
 @Setter
@@ -24,5 +25,17 @@ public class ScoringEvent {
 		se.pointAmount = pointAmount;
 		se.name = name;
 		return se;
+	}
+
+	public JSONObject serialize() {
+		return new JSONObject()
+				.put("id",getId())
+				.put("name", getName())
+				.put("pointAmount", getPointAmount());
+	}
+
+	public void update(JSONObject o) {
+		setName(o.getString("name"));
+		setPointAmount(o.getInt("points"));
 	}
 }
