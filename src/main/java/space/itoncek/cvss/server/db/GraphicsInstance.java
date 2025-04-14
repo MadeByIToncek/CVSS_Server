@@ -14,32 +14,24 @@ import org.json.JSONObject;
 public class GraphicsInstance {
 	@Id
 	public String ident;
-	public String nickname;
 	@Enumerated(value = EnumType.STRING)
 	public GraphicsMode mode;
-	public boolean updating;
 
-	public static GraphicsInstance generate(String key, GraphicsMode mode, boolean updating) {
+	public static GraphicsInstance generate(String key, GraphicsMode mode) {
 		GraphicsInstance i = new GraphicsInstance();
 		i.ident = key;
-		i.nickname = "";
 		i.mode = mode;
-		i.updating = updating;
 		return i;
 	}
 
 	public JSONObject serialize() {
 		return new JSONObject()
 				.put("ident", getIdent())
-				.put("nickname", getNickname())
-				.put("mode", getMode())
-				.put("updating",isUpdating());
+				.put("mode", getMode());
 	}
 
 	public void update(JSONObject o) {
-		setNickname(o.getString("nickname"));
 		setMode(o.getEnum(GraphicsInstance.GraphicsMode.class,"mode"));
-		setUpdating(o.getBoolean("updating"));
 	}
 
 	public enum GraphicsMode {

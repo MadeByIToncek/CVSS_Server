@@ -29,13 +29,13 @@ public class MatchManager {
 			if (currentmatch != null) {
 				em.remove(currentmatch);
 			}
-			em.persist(Keystore.generateKeystore("current_match", m.getId() + ""));
+			em.persist(Keystore.generateKeystore(CURRENT_MATCH, m.getId() + ""));
 
 			Keystore matchstate = em.find(Keystore.class, MATCH_STATE.name());
 			if (matchstate != null) {
 				em.remove(matchstate);
 			}
-			em.persist(Keystore.generateKeystore("match_state", "arm"));
+			em.persist(Keystore.generateKeystore(MATCH_STATE, "arm"));
 
 			server.wsMgr.broadcastEvent(Event.MATCH_ARM);
 
@@ -66,7 +66,7 @@ public class MatchManager {
 			if (matchstate != null) {
 				em.remove(matchstate);
 			}
-			em.persist(Keystore.generateKeystore("match_state", "arm"));
+			em.persist(Keystore.generateKeystore(MATCH_STATE, "arm"));
 
 			Keystore currentMatch = em.find(Keystore.class, CURRENT_MATCH.name());
 			Match match = em.find(Match.class, Integer.parseInt(currentMatch.value));
@@ -111,16 +111,32 @@ public class MatchManager {
 	public void getLeftTeamId(@NotNull Context ctx) {
 		server.f.runInTransaction(em -> {
 			Keystore currentMatch = em.find(Keystore.class, CURRENT_MATCH.name());
-			Match match = em.find(Match.class,Integer.parseInt(currentMatch.value));
-			ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result(match.getLeft().getId().toString());
+			if (currentMatch == null || currentMatch.value == null) {
+				ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result(Integer.toString(-1));
+				return;
+			}
+			try {
+				Match match = em.find(Match.class,Integer.parseInt(currentMatch.value));
+				ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result(match.getLeft().getId().toString());
+			} catch (NumberFormatException e) {
+				ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result(Integer.toString(-1));
+			}
 		});
 	}
 
 	public void getRightTeamId(@NotNull Context ctx) {
 		server.f.runInTransaction(em -> {
 			Keystore currentMatch = em.find(Keystore.class, CURRENT_MATCH.name());
-			Match match = em.find(Match.class,Integer.parseInt(currentMatch.value));
-			ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result(match.getRight().getId().toString());
+			if (currentMatch == null || currentMatch.value == null) {
+				ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result(Integer.toString(-1));
+				return;
+			}
+			try {
+				Match match = em.find(Match.class,Integer.parseInt(currentMatch.value));
+				ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result(match.getRight().getId().toString());
+			} catch (NumberFormatException e) {
+				ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result(Integer.toString(-1));
+			}
 		});
 	}
 

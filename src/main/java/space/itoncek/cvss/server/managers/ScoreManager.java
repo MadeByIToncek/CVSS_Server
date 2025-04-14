@@ -91,7 +91,10 @@ public class ScoreManager {
 		server.f.runInTransaction(em -> {
 			Keystore currentMatch = em.find(Keystore.class, CURRENT_MATCH.name());
 			if (currentMatch == null) {
-				ctx.status(HttpStatus.INTERNAL_SERVER_ERROR).result("-1");
+				ctx.status(HttpStatus.OK).result(new JSONObject()
+						.put("left", -1)
+						.put("right", -1)
+						.toString(4));
 			} else {
 				Match m = em.find(Match.class, Integer.parseInt(currentMatch.value));
 

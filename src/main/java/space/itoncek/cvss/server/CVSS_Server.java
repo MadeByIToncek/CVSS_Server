@@ -96,7 +96,6 @@ public class CVSS_Server implements Stoppable {
 					put("hide", overlayMgr::hideTimeOverlay);
 				});
 				post("register", overlayMgr::registerGraphicsClient);
-				post("report", overlayMgr::reportGraphicsReady);
 				get("instances", overlayMgr::listGraphicsInstances);
 				put("instance", overlayMgr::getGraphicsInstance);
 				patch("instance", overlayMgr::updateGraphicsInstance);
