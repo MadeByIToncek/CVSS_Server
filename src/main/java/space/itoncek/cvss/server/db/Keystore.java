@@ -15,7 +15,7 @@ public class Keystore {
 
 	public static Keystore generateKeystore(KeystoreKeys key, String value) {
 		Keystore ks = new Keystore();
-		ks.key= key.name();
+		ks.key = key.name();
 		ks.value = value;
 		return ks;
 	}

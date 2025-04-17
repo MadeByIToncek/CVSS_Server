@@ -29,7 +29,7 @@ public class ScoringEvent {
 
 	public JSONObject serialize() {
 		return new JSONObject()
-				.put("id",getId())
+				.put("id", getId())
 				.put("name", getName())
 				.put("pointAmount", getPointAmount());
 	}

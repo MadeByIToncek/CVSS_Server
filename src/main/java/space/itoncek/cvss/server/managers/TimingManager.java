@@ -15,10 +15,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 public class TimingManager implements Stoppable {
-	private final CVSS_Server server;
 	private static final int time = 10;
-	private final ScheduledExecutorService ses = Executors.newScheduledThreadPool(4);
 	final AtomicInteger remainingTime = new AtomicInteger(-1);
+	private final CVSS_Server server;
+	private final ScheduledExecutorService ses = Executors.newScheduledThreadPool(4);
 
 	public TimingManager(CVSS_Server server) {
 		this.server = server;

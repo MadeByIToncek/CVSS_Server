@@ -15,10 +15,10 @@ public class CVSS_Server implements Stoppable {
 	public final TeamManager teamMgr;
 	public final MatchManager matchMgr;
 	public final ScoreManager scoreMgr;
-	private final OverlayManager overlayMgr;
 	public final boolean dev = true;
 	public final WebsocketManager wsMgr;
 	public final TimingManager timingMgr;
+	private final OverlayManager overlayMgr;
 
 	public CVSS_Server() {
 
@@ -51,7 +51,7 @@ public class CVSS_Server implements Stoppable {
 			get("/", Roothandler::root);
 			get("/time", Roothandler::time);
 			get("/defaultMatchLength", timingMgr::getTime);
-			path("teams", ()-> {
+			path("teams", () -> {
 				get("teams", teamMgr::listTeams);
 				put("team", teamMgr::getTeam);
 				get("matches", teamMgr::listMatches);
@@ -64,7 +64,7 @@ public class CVSS_Server implements Stoppable {
 				delete("team", teamMgr::deleteTeam);
 				delete("match", teamMgr::deleteMatch);
 			});
-			path("match", ()-> {
+			path("match", () -> {
 				post("arm", matchMgr::arm);
 				post("start", matchMgr::start);
 				post("recycle", matchMgr::recycle);
@@ -74,7 +74,7 @@ public class CVSS_Server implements Stoppable {
 				get("matchInProgress", matchMgr::isMatchInProgress);
 				get("matchArmed", matchMgr::isMatchArmed);
 			});
-			path("score", ()->{
+			path("score", () -> {
 				get("events", scoreMgr::getScoringEvents);
 				post("event", scoreMgr::createNewScoringEvent);
 				patch("event", scoreMgr::updateScoringEvent);
@@ -82,16 +82,16 @@ public class CVSS_Server implements Stoppable {
 				get("matchScore", scoreMgr::getMatchScore);
 				post("score", scoreMgr::insertNewScoringEvent);
 			});
-			path("overlay", ()-> {
-				path("left", ()-> {
+			path("overlay", () -> {
+				path("left", () -> {
 					put("show", overlayMgr::showLeftOverlay);
 					put("hide", overlayMgr::hideLeftOverlay);
 				});
-				path("right", ()-> {
+				path("right", () -> {
 					put("show", overlayMgr::showRightOverlay);
 					put("hide", overlayMgr::hideRightOverlay);
 				});
-				path("timer", ()-> {
+				path("timer", () -> {
 					put("show", overlayMgr::showTimeOverlay);
 					put("hide", overlayMgr::hideTimeOverlay);
 				});
@@ -102,7 +102,7 @@ public class CVSS_Server implements Stoppable {
 				get("probe", overlayMgr::getProbe);
 				patch("probe", overlayMgr::setProbe);
 			});
-			path("stream", ()-> {
+			path("stream", () -> {
 				ws("overlay", overlayMgr::handleOverlayStream);
 				ws("event", wsMgr::handleEventStream);
 				ws("time", wsMgr::handleTimeStream);

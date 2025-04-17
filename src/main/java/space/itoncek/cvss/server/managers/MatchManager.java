@@ -7,7 +7,8 @@ import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
 import space.itoncek.cvss.server.CVSS_Server;
 import space.itoncek.cvss.server.db.Keystore;
-import static space.itoncek.cvss.server.db.Keystore.KeystoreKeys.*;
+import static space.itoncek.cvss.server.db.Keystore.KeystoreKeys.CURRENT_MATCH;
+import static space.itoncek.cvss.server.db.Keystore.KeystoreKeys.MATCH_STATE;
 import space.itoncek.cvss.server.db.Match;
 import space.itoncek.cvss.server.types.Event;
 
@@ -76,7 +77,7 @@ public class MatchManager {
 	}
 
 	public void endMatch() {
-		if(server.timingMgr.remainingTime.get() > 0) {
+		if (server.timingMgr.remainingTime.get() > 0) {
 			server.wsMgr.broadcastEvent(Event.MATCH_END);
 			server.wsMgr.broadcastClockStop();
 		}
@@ -116,7 +117,7 @@ public class MatchManager {
 				return;
 			}
 			try {
-				Match match = em.find(Match.class,Integer.parseInt(currentMatch.value));
+				Match match = em.find(Match.class, Integer.parseInt(currentMatch.value));
 				ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result(match.getLeft().getId().toString());
 			} catch (NumberFormatException e) {
 				ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result(Integer.toString(-1));
@@ -132,7 +133,7 @@ public class MatchManager {
 				return;
 			}
 			try {
-				Match match = em.find(Match.class,Integer.parseInt(currentMatch.value));
+				Match match = em.find(Match.class, Integer.parseInt(currentMatch.value));
 				ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result(match.getRight().getId().toString());
 			} catch (NumberFormatException e) {
 				ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result(Integer.toString(-1));

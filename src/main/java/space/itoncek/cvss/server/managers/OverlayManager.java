@@ -14,8 +14,8 @@ import org.json.JSONObject;
 import space.itoncek.cvss.server.CVSS_Server;
 import space.itoncek.cvss.server.db.GraphicsInstance;
 import space.itoncek.cvss.server.db.Keystore;
+import static space.itoncek.cvss.server.db.Keystore.KeystoreKeys.PROBE;
 import space.itoncek.cvss.server.types.Event;
-import static space.itoncek.cvss.server.db.Keystore.KeystoreKeys.*;
 import space.itoncek.cvss.server.types.GraphicsCommand;
 
 import java.time.Duration;

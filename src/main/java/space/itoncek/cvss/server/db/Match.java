@@ -18,7 +18,7 @@ public class Match {
 	Team left;
 	@ManyToOne(targetEntity = Team.class)
 	Team right;
-	@OneToMany(targetEntity = ScoreLogEntry.class,cascade = CascadeType.ALL, mappedBy = "match")
+	@OneToMany(targetEntity = ScoreLogEntry.class, cascade = CascadeType.ALL, mappedBy = "match")
 	List<ScoreLogEntry> scoreLog;
 	@Enumerated(EnumType.STRING)
 	MatchState matchState = MatchState.UPCOMING;
@@ -43,7 +43,7 @@ public class Match {
 				.put("result", getResult().toString());
 	}
 
-	public void update(JSONObject o,Team l, Team r) {
+	public void update(JSONObject o, Team l, Team r) {
 		setMatchState(o.getEnum(Match.MatchState.class, "matchState"));
 		setResult(o.getEnum(Match.Result.class, "result"));
 		setLeft(l);

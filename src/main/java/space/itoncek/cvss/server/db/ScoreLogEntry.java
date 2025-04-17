@@ -31,7 +31,7 @@ public class ScoreLogEntry {
 
 	public JSONObject serialize() {
 		return new JSONObject()
-				.put("id",getId())
+				.put("id", getId())
 				.put("matchId", getMatch().getId())
 				.put("leftSide", isLeftSide())
 				.put("event", getEvent().getId());

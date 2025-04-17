@@ -12,14 +12,14 @@ import java.util.List;
 @Getter
 @Entity
 public class Team {
+	@ElementCollection
+	public List<String> members;
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
 	private String name;
 	private String colorBright;
 	private String colorDark;
-	@ElementCollection
-	public List<String> members;
 
 	public static Team newTeam(String name, String colorBright, String colorDark) {
 		var course = new Team();

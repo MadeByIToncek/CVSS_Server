@@ -30,7 +30,7 @@ public class WebsocketManager {
 	}
 
 	public void broadcastEvent(Event e) {
-		log.info("Broadcasting event {}",e.name());
+		log.info("Broadcasting event {}", e.name());
 		wsEventClients.stream().filter(x -> x.session.isOpen()).forEach(x -> x.send(e.name()));
 	}
 
@@ -46,6 +46,7 @@ public class WebsocketManager {
 	public void broadcastClockStart() {
 		wsTimeClients.stream().filter(x -> x.session.isOpen()).forEach(x -> x.send(-1));
 	}
+
 	public void broadcastClockStop() {
 		wsTimeClients.stream().filter(x -> x.session.isOpen()).forEach(x -> x.send(-2));
 	}

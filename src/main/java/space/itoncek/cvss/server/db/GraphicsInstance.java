@@ -31,7 +31,7 @@ public class GraphicsInstance {
 	}
 
 	public void update(JSONObject o) {
-		setMode(o.getEnum(GraphicsInstance.GraphicsMode.class,"mode"));
+		setMode(o.getEnum(GraphicsInstance.GraphicsMode.class, "mode"));
 	}
 
 	public enum GraphicsMode {

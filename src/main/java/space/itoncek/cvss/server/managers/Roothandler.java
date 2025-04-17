@@ -13,6 +13,7 @@ public class Roothandler {
 	private static String getVersion() {
 		return Roothandler.class.getPackage().getImplementationVersion() == null ? "vDEVELOPMENT" : Roothandler.class.getPackage().getImplementationVersion();
 	}
+
 	public static void time(@NotNull Context ctx) {
 		ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result(System.currentTimeMillis() + "");
 	}
