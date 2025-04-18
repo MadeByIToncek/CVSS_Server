@@ -134,7 +134,10 @@ public class OverlayManager {
 	public void setProbe(@NotNull Context ctx) {
 		server.f.runInTransaction(em -> {
 			Keystore probe = em.find(Keystore.class, PROBE.name());
-			probe.setValue(ctx.body());
+			if(probe==null) {
+				probe = Keystore.generateKeystore(PROBE,Boolean.toString(Boolean.parseBoolean(ctx.body())));
+				em.persist(probe);
+			} else probe.setValue(Boolean.toString(Boolean.parseBoolean(ctx.body())));
 			ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result("ok");
 		});
 		server.wsMgr.broadcastEvent(Event.GRAPHICS_UPDATE_EVENT);
