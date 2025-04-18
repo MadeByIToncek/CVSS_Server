@@ -6,6 +6,8 @@ services:
       POSTGRES_PASSWORD: cvss
       POSTGRES_DB: cvss
     restart: unless-stopped
+    ports:
+      - "5433:5432"
     deploy:
       mode: global
     volumes:
